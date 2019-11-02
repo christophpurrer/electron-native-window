@@ -2,7 +2,14 @@
     "targets": [
         {
             "target_name": "addon",
-            "sources": ["native/*.cc"]
+            "conditions": [
+                ["OS=='mac'", {
+                    "sources": ["native/*.mm"],
+                }],
+                ["OS=='win'", {
+                    "sources": ["native/*.cc"],
+                }]
+            ],
         }
     ]
 }

@@ -1,24 +1,14 @@
-// hello.cc
 #include <node.h>
-#include <string>
-using namespace std;
 
 namespace native
 {
 
-using v8::FunctionCallbackInfo;
-using v8::Isolate;
-using v8::Local;
-using v8::Object;
-using v8::String;
-using v8::Value;
-
-void OpenNativeWindow(const FunctionCallbackInfo<Value> &args)
+void OpenNativeWindow(const v8::FunctionCallbackInfo<v8::Value> &args)
 {
-  args.GetReturnValue().Set(String::NewFromUtf8(args.GetIsolate(), "1"));
+  args.GetReturnValue().Set(v8::String::NewFromUtf8(args.GetIsolate(), "1"));
 }
 
-void Initialize(Local<Object> exports)
+void Initialize(v8::Local<v8::Object> exports)
 {
   NODE_SET_METHOD(exports, "openNativeWindow", OpenNativeWindow);
 }

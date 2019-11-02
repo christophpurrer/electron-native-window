@@ -4,7 +4,7 @@
 
 document.getElementById('nativeWindowRender').addEventListener('click', function () {
     console.log("renderer.js >> nativeWindowRender");
-    console.log(document.renderaddon.openNativeWindow());
+    document.renderaddon.openNativeWindow();
 });
 
 document.getElementById('nativeWindowMain').addEventListener('click', function () {

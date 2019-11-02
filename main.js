@@ -8,7 +8,6 @@ const addon = require('./utils').requireAddon('addon');
 // be closed automatically when the JavaScript object is garbage collected.
 let mainWindow
 
-
 function createWindow() {
   // Create the browser window.
   mainWindow = new BrowserWindow({
@@ -59,6 +58,6 @@ app.on('activate', function () {
 module.exports = {
   openNativeWindowInMain: function () {
     console.log("main.js >> openNativeWindowInMain");
-    console.log(addon.openNativeWindow());
+    addon.openNativeWindow();
   }
 }
