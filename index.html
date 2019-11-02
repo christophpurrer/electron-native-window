@@ -4,24 +4,34 @@
 <head>
   <meta charset="UTF-8">
   <title></title>
+
+  <style>
+    body {
+      background-color: powderblue;
+    }
+
+    .button {
+      background-color: #4CAF50;
+      border: none;
+      color: white;
+      padding: 15px 30px;
+      margin-right: 15px;
+      text-align: center;
+      text-decoration: none;
+      display: inline-block;
+      font-size: 16px;
+    }
+  </style>
 </head>
 
 <body>
-  <h1>Hello World!</h1>
-  <!-- All of the Node.js APIs are available in this renderer process. -->
-  We are using Node.js
-  <script>document.write(process.versions.node)</script>, Chromium
-  <script>document.write(process.versions.chrome)</script>, and Electron
-  <script>document.write(process.versions.electron)</script>.
+  <h1>Native Window Demo</h1>
 
-  <p style="color: red; font-weight: bold;">Notice that we set the window title via the native method called on start</p>
+  <input type="button" class="button" id="nativeWindowRender" value="Native Window in render process" />
 
-  
+  <input type="button" class="button" id="nativeWindowMain" value="Native Window in main process" />
 
-  <script>
-    // You can also require other files to run in this process
-    require('./renderer.js')
-  </script>
+  <script src="./renderer.js"></script>
 </body>
 
 </html>

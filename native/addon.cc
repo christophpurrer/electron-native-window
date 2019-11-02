@@ -3,7 +3,7 @@
 #include <string>
 using namespace std;
 
-namespace demo
+namespace native
 {
 
 using v8::FunctionCallbackInfo;
@@ -13,16 +13,16 @@ using v8::Object;
 using v8::String;
 using v8::Value;
 
-void Method(const FunctionCallbackInfo<Value> &args)
+void OpenNativeWindow(const FunctionCallbackInfo<Value> &args)
 {
   args.GetReturnValue().Set(String::NewFromUtf8(args.GetIsolate(), "1"));
 }
 
 void Initialize(Local<Object> exports)
 {
-  NODE_SET_METHOD(exports, "hello", Method);
+  NODE_SET_METHOD(exports, "openNativeWindow", OpenNativeWindow);
 }
 
 NODE_MODULE(NODE_GYP_MODULE_NAME, Initialize)
 
-} // namespace demo
+} // namespace native
