@@ -4,10 +4,13 @@
 #include <string>
 #include <windows.h>
 
+#define BUTTON_ID 1001
+
 struct NativeWindow
 {
   NativeWindow()
   {
+    // show it
     if (createWindow() == S_OK && hWnd_ != NULL && !IsWindowVisible(hWnd_))
     {
       ShowWindow(hWnd_, SW_SHOW);
@@ -37,7 +40,7 @@ private:
     wndClass.hInstance = hInstance_;
     wndClass.hIcon = NULL;
     wndClass.hCursor = LoadCursor(NULL, IDC_ARROW);
-    wndClass.hbrBackground = (HBRUSH)GetStockObject(BLACK_BRUSH);
+    wndClass.hbrBackground = (HBRUSH)GetStockObject(WHITE_BRUSH);
     wndClass.lpszMenuName = NULL;
     wndClass.lpszClassName = windowClassName.c_str();
 
@@ -50,13 +53,14 @@ private:
       }
     }
 
+    // Setup window
     hWnd_ = CreateWindow(windowClassName.c_str(),
                          L"NativeWindow",
                          WS_OVERLAPPEDWINDOW,
                          CW_USEDEFAULT,
                          CW_USEDEFAULT,
-                         1280,
-                         720,
+                         640,
+                         320,
                          NULL,
                          NULL,
                          hInstance_,
@@ -67,6 +71,22 @@ private:
       DWORD dwError = GetLastError();
       return HRESULT_FROM_WIN32(dwError);
     }
+
+    // add a button
+    HINSTANCE hButtonInstance = NULL;
+    HWND hwndButton = CreateWindow(
+        L"BUTTON",
+        L"OK",
+        WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,
+        10,
+        10,
+        100,
+        100,
+        hWnd_,
+        NULL,
+        hButtonInstance,
+        NULL);
+
     return S_OK;
   }
 
