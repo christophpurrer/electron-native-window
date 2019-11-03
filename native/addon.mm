@@ -2,46 +2,70 @@
 #import <Foundation/Foundation.h>
 #import <Cocoa/Cocoa.h>
 
-@interface WindowDelegate : NSObject <NSWindowDelegate> @end
+@interface NativeWindow : NSObject
+@end
 
-@implementation WindowDelegate
+@implementation NativeWindow
+NSWindow* window_;
 
--(void)buttonClicked:(id)sender {
-    NSWindow* window = [[NSWindow alloc]
-                        initWithContentRect:NSMakeRect(200, 200, 200, 200)
-                        styleMask:NSWindowStyleMaskTitled | NSWindowStyleMaskClosable |      NSWindowStyleMaskResizable
-                        backing:NSBackingStoreBuffered
-                        defer:NO];
-    [window setBackgroundColor:[NSColor redColor]];
-    [window makeKeyAndOrderFront:NULL];
+-(void)buttonClicked:(NSButton*)sender {
+    @autoreleasepool {
+        NSAlert *alert = [NSAlert new];
+        [alert setMessageText:@"Click me"];
+        [alert setInformativeText:@"Don't be shy"];
+        [alert addButtonWithTitle:@"Okay"];
+        [alert setAlertStyle:NSWarningAlertStyle];
+        [alert beginSheetModalForWindow:window_ completionHandler:^(NSModalResponse returnCode) {}];
+    }
 }
 
+- (id)init {
+    @autoreleasepool {
+        // Setup window
+        window_ = [[NSWindow alloc]
+                   initWithContentRect:NSMakeRect(100, 100, 360, 640)
+                   styleMask:NSWindowStyleMaskTitled | NSWindowStyleMaskClosable | NSWindowStyleMaskResizable
+                   backing:NSBackingStoreBuffered
+                   defer:NO];
+        
+        // add a button
+        NSButton *button = [[NSButton alloc] initWithFrame:NSMakeRect(10, 10, 100, 50)];
+        [button setTitle:@"Open Window"];
+        [button setTarget:self];
+        [button setAction:@selector(buttonClicked:)];
+        [window_.contentView addSubview:button];
+        
+        // show it
+        [window_ makeKeyAndOrderFront:NULL];
+    }
+    return self;
+}
 @end
+
+static void NativeWindowFinalize(napi_env env, void* object, void* hint) {
+    @autoreleasepool {
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused"
+        auto window = (__bridge_transfer NativeWindow*)object;
+#pragma clang diagnostic pop
+    }
+}
 
 namespace native
 {
 
 napi_value OpenNativeWindow(napi_env env, napi_callback_info info)
 {
-    // Setup window
-    NSWindow* window = [[NSWindow alloc]
-                        initWithContentRect:NSMakeRect(100, 100, 720, 1280)
-                        styleMask:NSWindowStyleMaskTitled | NSWindowStyleMaskClosable | NSWindowStyleMaskResizable
-                        backing:NSBackingStoreBuffered
-                        defer:NO];
-    [window makeKeyAndOrderFront:NULL];
-    
-    // ... and its delegate
-    WindowDelegate* windowDelegate = [WindowDelegate new];
-    [window setDelegate:windowDelegate];
-    
-    // add a button
-    NSButton *button = [[NSButton alloc] initWithFrame:NSMakeRect(10, 10, 200, 100)];
-    [button setTitle:@"Open Window"];
-    [button setTarget:windowDelegate];
-    [button setAction:@selector(buttonClicked:)];
-    [window.contentView addSubview:button];
-    return nullptr;
+    auto nativeWindow = [NativeWindow new];
+    napi_value jsWindow;
+    NAPI_CHECK(napi_create_object(env, &jsWindow));
+    NAPI_CHECK(napi_wrap(env,
+                         jsWindow,
+                         (__bridge_retained void*)nativeWindow,
+                         &NativeWindowFinalize,
+                         nullptr,
+                         nullptr));
+    return jsWindow;
 }
 
 napi_value Initialize(napi_env env, napi_value exports)

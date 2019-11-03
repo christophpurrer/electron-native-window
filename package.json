@@ -1,12 +1,14 @@
 {
     "name": "electron-native-window",
     "version": "0.0.1",
-    "description": "A minimal Electron application launching native Windows",    
+    "description": "A minimal Electron application launching native Windows",
     "main": "main.js",
     "scripts": {
-        "build": "node_modules/.bin/node-gyp rebuild --debug",
+        "build": "node_modules/.bin/node-gyp build --debug",
         "clean": "rm -rf bin && rm -rf build && rm -rf dist",
-        "start": "yarn run build && node_modules/.bin/electron ."
+        "genxcode": "export PYTHON=/usr/bin/python && node_modules/.bin/node-gyp configure -- -f xcode",
+        "start": "yarn run build && node_modules/.bin/electron .",
+        "postinstall": "node_modules/.bin/node-gyp configure"
     },
     "repository": "https://github.com/christophpurrer/electron-native-window",
     "engines": {

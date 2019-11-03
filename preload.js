@@ -4,4 +4,5 @@ const openNativeWindowInMain = require('electron').remote.require('./main').open
 window.document.openNativeWindowInMain = openNativeWindowInMain;
 
 const renderaddon = require('./utils').requireAddon('addon');
+console.log(`render process.pid: ${process.pid}`)
 window.document.renderaddon = renderaddon;

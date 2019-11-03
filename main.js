@@ -2,6 +2,7 @@
 const { app, BrowserWindow } = require('electron');
 const path = require('path');
 const addon = require('./utils').requireAddon('addon');
+console.log(`main process.pid: ${process.pid}`)
 
 // Prints: 'world'
 // Keep a global reference of the window object, if you don't, the window will

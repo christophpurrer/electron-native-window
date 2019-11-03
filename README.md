@@ -21,4 +21,12 @@ npm start
 ```
 This will run the application.
 
+## Developer tooling
 Open the Chrome developer tools to see relevant logging statements
+
+For Xcode, run
+```bash
+yarn genxcode
+```
+This might only work with Python 2.7 and not with version 3.7
+
