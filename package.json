@@ -6,7 +6,7 @@
     "scripts": {
         "build": "node_modules/.bin/node-gyp rebuild --debug",
         "clean": "rm -rf bin && rm -rf build && rm -rf dist",
-        "start": "npm run build && node_modules/.bin/electron ."
+        "start": "yarn run build && node_modules/.bin/electron ."
     },
     "repository": "https://github.com/christophpurrer/electron-native-window",
     "engines": {

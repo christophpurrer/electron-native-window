@@ -3,9 +3,9 @@
 namespace native
 {
 
-void OpenNativeWindow(const v8::FunctionCallbackInfo<v8::Value> &args)
-{
-  args.GetReturnValue().Set(v8::String::NewFromUtf8(args.GetIsolate(), "1"));
+napi_value OpenNativeWindow(napi_env env, napi_callback_info info)
+{ 
+	return nullptr;
 }
 
 napi_value Initialize(napi_env env, napi_value exports)
