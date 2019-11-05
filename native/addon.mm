@@ -2,14 +2,22 @@
 
 #import <Cocoa/Cocoa.h>
 #import <Foundation/Foundation.h>
- 
-@interface NativeWindow : NSObject<NSWindowDelegate> {
-  NSWindow* window_;
+
+@interface OurNSWindow : NSWindow
+@end
+
+@implementation OurNSWindow
+- (void)dealloc {
+  NSLog(@"OurNSWindow dealloc%@", self);
+}
+@end
+
+@interface NativeWindow : NSWindowController <NSWindowDelegate> {
+  OurNSWindow* window_;
 }
 @end
 
 @implementation NativeWindow
-bool initWasCalled = NO;
 
 - (void)buttonClicked:(NSButton*)sender {
   @autoreleasepool {
@@ -27,12 +35,12 @@ bool initWasCalled = NO;
 - (id)init {
   if (self = [super init]) {
     // Setup window
-    window_ =
-        [[NSWindow alloc] initWithContentRect:NSMakeRect(100, 100, 360, 640)
-                                    styleMask:NSWindowStyleMaskTitled | NSWindowStyleMaskClosable |
-                                              NSWindowStyleMaskResizable
-                                      backing:NSBackingStoreBuffered
-                                        defer:NO];
+    window_ = [[OurNSWindow alloc]
+        initWithContentRect:NSMakeRect(100, 100, 360, 640)
+                  styleMask:NSWindowStyleMaskTitled | NSWindowStyleMaskClosable |
+                            NSWindowStyleMaskResizable
+                    backing:NSBackingStoreBuffered
+                      defer:NO];
     [window_
         setFrameTopLeftPoint:NSMakePoint(100, [[NSScreen mainScreen] frame].size.height - 100)];
     [window_ setDelegate:self];
@@ -44,6 +52,10 @@ bool initWasCalled = NO;
     [button setAction:@selector(buttonClicked:)];
     [window_.contentView addSubview:button];
 
+    // don't release window_ onClose, do it when NativeWindow gets released
+    // https://developer.apple.com/documentation/appkit/nswindow/1419662-close?language=objc
+    [window_ setReleasedWhenClosed:NO];
+      
     // show it
     [window_ makeKeyAndOrderFront:NULL];
   }
@@ -51,15 +63,17 @@ bool initWasCalled = NO;
   return self;
 }
 
-- (void)windowWillClose:(NSNotification *)notification {
-  // CFRelease((void*)instance); // > this will crash the app
-  //window_ = nil;// > this will crash the app
+- (void)windowWillClose:(NSNotification*)notification {
+  NSLog(@"NativeWindow windowWillClose%@", self);
+  CFRelease((__bridge CFTypeRef)self);
 }
 
 - (void)dealloc {
   NSLog(@"NativeWindow dealloc%@", self);
 }
 @end
+
+bool initWasCalled = NO;
 
 namespace native {
 
@@ -72,17 +86,17 @@ napi_value Init(napi_env env, napi_callback_info info) {
   initWasCalled = YES;
   [[NSRunLoop mainRunLoop] performBlock:^{
     NSApplicationLoad();
-    NSLog(@"Init mode:%@", [[NSRunLoop currentRunLoop] currentMode]);
+    NSLog(@"Init(): NSRunLoop mode:%@", [[NSRunLoop currentRunLoop] currentMode]);
     [[NSApplication sharedApplication] run];
-    NSLog(@"NSApplication is gone :-(");
+    NSLog(@"NSApplication is gone :-( - MUST never happen");
   }];
   return nullptr;
 }
 
 napi_value OpenNativeWindow(napi_env env, napi_callback_info info) {
   [[NSRunLoop mainRunLoop] performBlock:^{
-    NSLog(@"OpenNativeWindow mode:%@", [[NSRunLoop currentRunLoop] currentMode]);
-    CFRetain((__bridge_retained CFTypeRef)[NativeWindow new]);
+    NSLog(@"OpenNativeWindow(): NSRunLoop mode:%@", [[NSRunLoop currentRunLoop] currentMode]);
+    CFRetain((__bridge CFTypeRef)[NativeWindow new]);
   }];
   return nullptr;
 }
