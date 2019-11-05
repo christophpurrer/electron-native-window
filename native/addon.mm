@@ -2,8 +2,8 @@
 
 #import <Cocoa/Cocoa.h>
 #import <Foundation/Foundation.h>
-
-@interface NativeWindow : NSObject {
+ 
+@interface NativeWindow : NSObject<NSWindowDelegate> {
   NSWindow* window_;
 }
 @end
@@ -35,6 +35,7 @@ bool initWasCalled = NO;
                                         defer:NO];
     [window_
         setFrameTopLeftPoint:NSMakePoint(100, [[NSScreen mainScreen] frame].size.height - 100)];
+    [window_ setDelegate:self];
 
     // add a button
     NSButton* button = [[NSButton alloc] initWithFrame:NSMakeRect(10, 10, 100, 50)];
@@ -49,17 +50,16 @@ bool initWasCalled = NO;
   NSLog(@"NativeWindow init%@", self);
   return self;
 }
+
+- (void)windowWillClose:(NSNotification *)notification {
+  // CFRelease((void*)instance); // > this will crash the app
+  //window_ = nil;// > this will crash the app
+}
+
 - (void)dealloc {
   NSLog(@"NativeWindow dealloc%@", self);
 }
 @end
-
-static void NativeWindowFinalize(napi_env env, void* object, void* hint) {
-  @autoreleasepool {
-    auto window = (__bridge_transfer NativeWindow*)object;
-    NSLog(@"NativeWindowFinalize %@", window);
-  }
-}
 
 namespace native {
 
@@ -80,30 +80,16 @@ napi_value Init(napi_env env, napi_callback_info info) {
 }
 
 napi_value OpenNativeWindow(napi_env env, napi_callback_info info) {
-  auto nativeWindow = [NativeWindow alloc];
   [[NSRunLoop mainRunLoop] performBlock:^{
     NSLog(@"OpenNativeWindow mode:%@", [[NSRunLoop currentRunLoop] currentMode]);
-    CFRetain((__bridge_retained CFTypeRef)[nativeWindow init]);
+    CFRetain((__bridge_retained CFTypeRef)[NativeWindow new]);
   }];
-  napi_value jsWindow;
-  NAPI_CHECK(napi_create_object(env, &jsWindow));
-  NAPI_CHECK(napi_wrap(env,
-                       jsWindow,
-                       (__bridge_retained void*)nativeWindow,
-                       &NativeWindowFinalize,
-                       nullptr,
-                       nullptr));
-  return jsWindow;
+  return nullptr;
 }
 
 napi_value Initialize(napi_env env, napi_value exports) {
-  napi_value init;
-  NAPI_CHECK(napi_create_function(env, NULL, 0, Init, NULL, &init));
-  NAPI_CHECK(napi_set_named_property(env, exports, "init", init));
-
-  napi_value openNativeWindow;
-  NAPI_CHECK(napi_create_function(env, NULL, 0, OpenNativeWindow, NULL, &openNativeWindow));
-  NAPI_CHECK(napi_set_named_property(env, exports, "openNativeWindow", openNativeWindow));
+  register_napi_function(env, exports, "init", Init);
+  register_napi_function(env, exports, "openNativeWindow", OpenNativeWindow);
   return exports;
 }
 
