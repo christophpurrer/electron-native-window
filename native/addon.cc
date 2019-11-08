@@ -1,154 +1,119 @@
 #include "napi_utils.h"
 #define WIN32_LEAN_AND_MEAN
 #define UNICODE
-#include <string>
+#include <iostream>
+#include <stdlib.h>
+#include <string.h>
+#include <tchar.h>
+#include <thread>
+#include <vector>
 #include <windows.h>
 
-#define BUTTON_ID 1001
+struct NativeWindow;
+std::vector<std::thread> windowThreads;
+int windowCounter = 0;
 
-struct NativeWindow
-{
-  NativeWindow()
-  {
-    // show it
-    if (createWindow() == S_OK && hWnd_ != NULL && !IsWindowVisible(hWnd_))
-    {
-      ShowWindow(hWnd_, SW_SHOW);
-    }
-  }
+struct NativeWindow {
+	static LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
+		switch (message) {
+		case WM_DESTROY:
+			PostQuitMessage(0);
+			windowThreads.erase(windowThreads.begin());
+			break;
+		default:
+			return DefWindowProc(hWnd, message, wParam, lParam);
+			break;
+		}
+		return 0;
+	}
 
-  ~NativeWindow() = default;
+	NativeWindow() {
+		std::cout << "NativeWindow" << std::endl;
+		init();
+	}
+
+	~NativeWindow() {
+		hInstance_ = nullptr;
+		std::cout << "~NativeWindow" << std::endl;
+	}
+
+	int init() {
+		hInstance_ = (HINSTANCE)GetModuleHandle(NULL);
+
+		std::wstring windowClassName = L"Messenger" + windowCounter;
+		windowCounter++;
+		// Register the windows class
+		WNDCLASSEX wcex;
+		wcex.cbSize = sizeof(WNDCLASSEX);
+		wcex.style = CS_HREDRAW | CS_VREDRAW;
+		wcex.lpfnWndProc = WndProc;
+		wcex.cbClsExtra = 0;
+		wcex.cbWndExtra = 0;
+		wcex.hInstance = hInstance_;
+		wcex.hIcon = LoadIcon(hInstance_, IDI_APPLICATION);
+		wcex.hCursor = LoadCursor(NULL, IDC_ARROW);
+		wcex.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
+		wcex.lpszMenuName = NULL;
+		wcex.lpszClassName = windowClassName.c_str();
+		wcex.hIconSm = LoadIcon(wcex.hInstance, IDI_APPLICATION);
+
+		if (!RegisterClassEx(&wcex)) {
+			std::cout << "Call to RegisterClassEx failed!" << std::endl;
+			return 1;
+		}
+
+		// Store instance handle in our global variable
+		HINSTANCE hInst = hInstance_;
+		HWND hWnd = CreateWindow(windowClassName.c_str(),
+			L"NativeWindow",
+			WS_OVERLAPPEDWINDOW,
+			CW_USEDEFAULT,
+			CW_USEDEFAULT,
+			360,
+			640,
+			NULL,
+			NULL,
+			hInstance_,
+			NULL);
+
+		if (!hWnd) {
+			std::cout << "Call to CreateWindow failed!" << std::endl;
+			return 1;
+		}
+
+		ShowWindow(hWnd, SW_SHOW);
+		UpdateWindow(hWnd);
+
+		// Main message loop:
+		MSG msg;
+		while (GetMessage(&msg, NULL, 0, 0)) {
+			TranslateMessage(&msg);
+			DispatchMessage(&msg);
+		}
+		return (int)msg.wParam;
+	};
+
+	bool isRunning() {
+		return hInstance_;
+	}
 
 private:
-  HWND hWnd_;
-  HINSTANCE hInstance_ = NULL;
-
-  HRESULT createWindow()
-  {
-    if (hInstance_ == NULL)
-    {
-      hInstance_ = (HINSTANCE)GetModuleHandle(NULL);
-    }
-
-    std::wstring windowClassName = L"Messenger";
-    // Register the windows class
-    WNDCLASS wndClass;
-    wndClass.style = CS_HREDRAW | CS_VREDRAW;
-    wndClass.lpfnWndProc = NativeWindow::WndProc;
-    wndClass.cbClsExtra = 0;
-    wndClass.cbWndExtra = 0;
-    wndClass.hInstance = hInstance_;
-    wndClass.hIcon = NULL;
-    wndClass.hCursor = LoadCursor(NULL, IDC_ARROW);
-    wndClass.hbrBackground = (HBRUSH)GetStockObject(WHITE_BRUSH);
-    wndClass.lpszMenuName = NULL;
-    wndClass.lpszClassName = windowClassName.c_str();
-
-    if (!RegisterClass(&wndClass))
-    {
-      DWORD dwError = GetLastError();
-      if (dwError != ERROR_CLASS_ALREADY_EXISTS)
-      {
-        return HRESULT_FROM_WIN32(dwError);
-      }
-    }
-
-    // Setup window
-    hWnd_ = CreateWindow(windowClassName.c_str(),
-                         L"NativeWindow",
-                         WS_OVERLAPPEDWINDOW,
-                         CW_USEDEFAULT,
-                         CW_USEDEFAULT,
-                         640,
-                         320,
-                         NULL,
-                         NULL,
-                         hInstance_,
-                         NULL);
-
-    if (hWnd_ == NULL)
-    {
-      DWORD dwError = GetLastError();
-      return HRESULT_FROM_WIN32(dwError);
-    }
-
-    // add a button
-    HINSTANCE hButtonInstance = NULL;
-    HWND hwndButton = CreateWindow(
-        L"BUTTON",
-        L"OK",
-        WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,
-        10,
-        10,
-        100,
-        100,
-        hWnd_,
-        NULL,
-        hButtonInstance,
-        NULL);
-
-    return S_OK;
-  }
-
-  static LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
-  {
-    switch (uMsg)
-    {
-    case WM_CLOSE:
-    {
-      HMENU hMenu;
-      hMenu = GetMenu(hWnd);
-      if (hMenu != NULL)
-      {
-        DestroyMenu(hMenu);
-      }
-      DestroyWindow(hWnd);
-      return 0;
-    }
-
-    case WM_DESTROY:
-      PostQuitMessage(0);
-      break;
-    }
-
-    return DefWindowProc(hWnd, uMsg, wParam, lParam);
-  }
+	HINSTANCE hInstance_ = nullptr;
 };
 
-static void NativeWindowFinalize(napi_env env, void *object, void *hint)
-{
-  auto nativeWindow = reinterpret_cast<NativeWindow *>(object);
-  if (nativeWindow)
-  {
-    delete nativeWindow;
-  }
-}
+namespace native {
+	napi_value OpenNativeWindow(napi_env env, napi_callback_info info) {
+		windowThreads.push_back(std::thread([]() { NativeWindow(); }));
+		return nullptr;
+	}
 
-namespace native
-{
+	napi_value Initialize(napi_env env, napi_value exports) {
+		napi_value openNativeWindow;
+		NAPI_CHECK(napi_create_function(env, NULL, 0, OpenNativeWindow, NULL, &openNativeWindow));
+		NAPI_CHECK(napi_set_named_property(env, exports, "openNativeWindow", openNativeWindow));
+		return exports;
+	}
 
-napi_value OpenNativeWindow(napi_env env, napi_callback_info info)
-{
-  auto nativeWindow = new NativeWindow{};
-  napi_value jsWindow;
-  NAPI_CHECK(napi_create_object(env, &jsWindow));
-  NAPI_CHECK(napi_wrap(env,
-                       jsWindow,
-                       reinterpret_cast<void *>(nativeWindow),
-                       NativeWindowFinalize,
-                       nullptr,
-                       nullptr));
-  return jsWindow;
-}
-
-napi_value Initialize(napi_env env, napi_value exports)
-{
-  napi_value openNativeWindow;
-  NAPI_CHECK(napi_create_function(env, NULL, 0, OpenNativeWindow, NULL, &openNativeWindow));
-  NAPI_CHECK(napi_set_named_property(env, exports, "openNativeWindow", openNativeWindow));
-  return exports;
-}
-
-NAPI_MODULE(NODE_GYP_MODULE_NAME, Initialize)
+	NAPI_MODULE(NODE_GYP_MODULE_NAME, Initialize)
 
 } // namespace native
