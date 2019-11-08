@@ -53,7 +53,6 @@ struct NativeWindow {
 		}
 
 		// Store instance handle in our global variable
-		HINSTANCE hInst = hInstance;
 		hWnd_ = CreateWindow(windowClassName.c_str(),
 			L"NativeWindow",
 			WS_OVERLAPPEDWINDOW,
