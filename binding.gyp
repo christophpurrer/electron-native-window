@@ -2,6 +2,7 @@
     "targets": [
         {
             "target_name": "addon",
+            "cflags": ["-std=c++11"],
             "sources": ["native/napi_utils.h"],
             "conditions": [
                 ["OS=='mac'", {
