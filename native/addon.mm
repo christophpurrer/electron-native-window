@@ -94,6 +94,7 @@ napi_value Init(napi_env env, napi_callback_info info) {
 }
 
 napi_value OpenNativeWindow(napi_env env, napi_callback_info info) {
+  printThreadId("OpenNativeWindow");
   [[NSRunLoop mainRunLoop] performBlock:^{
     NSLog(@"OpenNativeWindow(): NSRunLoop mode:%@", [[NSRunLoop currentRunLoop] currentMode]);
     CFRetain((__bridge CFTypeRef)[NativeWindow new]);
@@ -102,6 +103,7 @@ napi_value OpenNativeWindow(napi_env env, napi_callback_info info) {
 }
 
 napi_value Initialize(napi_env env, napi_value exports) {
+  printThreadId("Initialize");
   register_napi_function(env, exports, "init", Init);
   register_napi_function(env, exports, "openNativeWindow", OpenNativeWindow);
   return exports;
