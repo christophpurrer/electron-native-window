@@ -10,6 +10,11 @@
 namespace native
 {
 
+struct WorkerObject
+{
+	napi_async_work asyncWork_;
+};
+
 struct NativeWindow
 {
 	static LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
@@ -28,7 +33,7 @@ struct NativeWindow
 
 	NativeWindow()
 	{
-		std::cout << "NativeWindow" << std::endl;
+		printThreadId("NativeWindow");
 		HINSTANCE hInstance = (HINSTANCE)GetModuleHandle(NULL);
 
 		// Register the windows class with unique className to allow multiWindow support
@@ -89,7 +94,7 @@ struct NativeWindow
 
 	~NativeWindow()
 	{
-		std::cout << "~NativeWindow" << std::endl;
+		printThreadId("~NativeWindow");
 	}
 
 private:
@@ -97,15 +102,32 @@ private:
 };
 std::atomic<int> NativeWindow::windowCounter_{0};
 
+void Execute(napi_env env,void*data){
+  printThreadId("Execute");
+  NativeWindow window;
+}
+
+void Complete(napi_env env, napi_status status, void* data){
+  printThreadId("Complete");
+  auto workerObject = (WorkerObject*)data;  
+  NAPI_CHECK(status);
+  NAPI_CHECK(napi_delete_async_work(env, workerObject->asyncWork_));
+  delete workerObject;
+}
+
 napi_value OpenNativeWindow(napi_env env, napi_callback_info info)
 {
-	// TODO: Clean up nativeWindow threads
-	new std::thread(([]() { NativeWindow nativeWindow; }));
+	auto workerObject = new WorkerObject();
+	napi_value resourceName;
+	NAPI_CHECK(napi_create_string_utf8(env, "OpenNativeWindowAsync", NAPI_AUTO_LENGTH, &resourceName));
+	NAPI_CHECK(napi_create_async_work(env, nullptr, resourceName, Execute, Complete, workerObject, &workerObject->asyncWork_));
+	NAPI_CHECK(napi_queue_async_work(env, workerObject->asyncWork_));
 	return nullptr;
 }
 
 napi_value Initialize(napi_env env, napi_value exports)
 {
+	printThreadId("Initialize");
 	napi_value openNativeWindow;
 	NAPI_CHECK(napi_create_function(env, NULL, 0, OpenNativeWindow, NULL, &openNativeWindow));
 	NAPI_CHECK(napi_set_named_property(env, exports, "openNativeWindow", openNativeWindow));
