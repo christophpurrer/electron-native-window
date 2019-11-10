@@ -30,3 +30,4 @@ yarn genxcode
 ```
 This might only work with Python 2.7 and not with version 3.7
 
+![Demo](screenshot.png)
