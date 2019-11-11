@@ -54,29 +54,29 @@ struct NativeWindow
 		}
 
 		// Store instance handle in our global variable
-		HWND hWnd_ = CreateWindow(windowClassName.c_str(),
-								  L"NativeWindow",
-								  WS_OVERLAPPEDWINDOW,
-								  CW_USEDEFAULT,
-								  CW_USEDEFAULT,
-								  360,
-								  640,
-								  NULL,
-								  NULL,
-								  hInstance,
-								  NULL);
+		HWND hWnd = CreateWindow(windowClassName.c_str(),
+								 L"NativeWindow",
+								 WS_OVERLAPPEDWINDOW,
+								 CW_USEDEFAULT,
+								 CW_USEDEFAULT,
+								 360,
+								 640,
+								 NULL,
+								 NULL,
+								 hInstance,
+								 NULL);
 
-		if (!hWnd_)
+		if (!hWnd)
 		{
 			std::cout << "Call to CreateWindow failed!" << std::endl;
 			return;
 		}
 
-		ShowWindow(hWnd_, SW_SHOW);
-		UpdateWindow(hWnd_);
+		ShowWindow(hWnd, SW_SHOW);
+		UpdateWindow(hWnd);
 
 		// start main message loop
-		if (hWnd_)
+		if (hWnd)
 		{
 			MSG msg;
 			while (GetMessage(&msg, NULL, 0, 0))
@@ -85,6 +85,8 @@ struct NativeWindow
 				DispatchMessage(&msg);
 			}
 		}
+		// close window
+		DestroyWindow(hWnd);
 	};
 
 	~NativeWindow()
