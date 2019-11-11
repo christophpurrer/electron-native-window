@@ -1,8 +1,9 @@
 // Modules to control application life and create native browser window
 const { app, BrowserWindow } = require('electron');
 const path = require('path');
+console.log();
 const addon = require('./utils').requireAddon('addon');
-console.log(`main process.pid: ${process.pid}`)
+console.log(`main process.pid: ${process.pid}\n`)
 
 // Prints: 'world'
 // Keep a global reference of the window object, if you don't, the window will

@@ -10,11 +10,6 @@
 namespace native
 {
 
-struct WorkerObject
-{
-	napi_async_work asyncWork_;
-};
-
 struct NativeWindow
 {
 	static LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
@@ -102,26 +97,43 @@ private:
 };
 std::atomic<int> NativeWindow::windowCounter_{0};
 
-void Execute(napi_env env,void*data){
-  printThreadId("Execute");
-  NativeWindow window;
+struct WorkerObject
+{
+	napi_env env_;
+	napi_async_work asyncWork_;
+	std::thread *thread_ptr;
+};
+
+void FreeStdThreadExecute(napi_env env, void *data)
+{
+	printThreadId("FreeStdThreadExecute");
 }
 
-void Complete(napi_env env, napi_status status, void* data){
-  printThreadId("Complete");
-  auto workerObject = (WorkerObject*)data;  
-  NAPI_CHECK(status);
-  NAPI_CHECK(napi_delete_async_work(env, workerObject->asyncWork_));
-  delete workerObject;
+void FreeStdThreadComplete(napi_env env, napi_status status, void *data)
+{
+	printThreadId("FreeStdThreadComplete");
+	auto workerObject = (WorkerObject *)data;
+	NAPI_CHECK(status);
+	NAPI_CHECK(napi_delete_async_work(env, workerObject->asyncWork_));
+	printThreadId("FreeStdThreadComplete > joining std::thread ...");
+	workerObject->thread_ptr->join();
+	delete workerObject->thread_ptr;
+	delete workerObject;
 }
 
 napi_value OpenNativeWindow(napi_env env, napi_callback_info info)
 {
+	printThreadId("OpenNativeWindow");
 	auto workerObject = new WorkerObject();
+	workerObject->env_ = env;
 	napi_value resourceName;
-	NAPI_CHECK(napi_create_string_utf8(env, "OpenNativeWindowAsync", NAPI_AUTO_LENGTH, &resourceName));
-	NAPI_CHECK(napi_create_async_work(env, nullptr, resourceName, Execute, Complete, workerObject, &workerObject->asyncWork_));
-	NAPI_CHECK(napi_queue_async_work(env, workerObject->asyncWork_));
+	NAPI_CHECK(napi_create_string_utf8(workerObject->env_, "FreeStdThread", NAPI_AUTO_LENGTH, &resourceName));
+	NAPI_CHECK(napi_create_async_work(workerObject->env_, nullptr, resourceName, FreeStdThreadExecute, FreeStdThreadComplete, workerObject, &workerObject->asyncWork_));
+	workerObject->thread_ptr = new std::thread([=]() {
+		printThreadId("std::thread");
+		NativeWindow window;
+		NAPI_CHECK(napi_queue_async_work(workerObject->env_, workerObject->asyncWork_));
+	});
 	return nullptr;
 }
 
