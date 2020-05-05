@@ -1,7 +1,9 @@
 #include "napi_utils.h"
 
-#import <Cocoa/Cocoa.h>
-#import <Foundation/Foundation.h>
+#include <Cocoa/Cocoa.h>
+#include <Foundation/Foundation.h>
+#include <array>
+#include <objc/objc-runtime.h>
 
 @interface OurNSWindow : NSWindow
 @end
@@ -44,6 +46,7 @@
     [window_
         setFrameTopLeftPoint:NSMakePoint(100, [[NSScreen mainScreen] frame].size.height - 100)];
     [window_ setDelegate:self];
+    [window_ setTitle:@"NSWindow"];
 
     // add a button
     NSButton* button = [[NSButton alloc] initWithFrame:NSMakeRect(10, 10, 100, 50)];
@@ -55,7 +58,7 @@
     // don't release window_ onClose, do it when NativeWindow gets released
     // https://developer.apple.com/documentation/appkit/nswindow/1419662-close?language=objc
     [window_ setReleasedWhenClosed:NO];
-      
+
     // show it
     [window_ makeKeyAndOrderFront:NULL];
   }
@@ -102,10 +105,38 @@ napi_value OpenNativeWindow(napi_env env, napi_callback_info info) {
   return nullptr;
 }
 
+napi_value MakeNativeWindow(napi_env env, napi_callback_info info) {
+  printThreadId("MakeNativeWindow");
+  std::array<napi_value, 2> args;
+  size_t argc = args.size();
+  NAPI_CHECK(napi_get_cb_info(env, info, &argc, args.data(), nullptr, nullptr));
+
+  bool isBuffer = false;
+  NAPI_CHECK(napi_is_buffer(env, args[0], &isBuffer));
+
+  void* handleBuffer;
+  size_t length;
+  NAPI_CHECK(napi_get_buffer_info(env, args[0], &handleBuffer, &length));
+
+  NSView* __weak mainContentView = *reinterpret_cast<NSView * __weak*>(handleBuffer);
+  [mainContentView.window setStyleMask:NSWindowStyleMaskTitled | NSWindowStyleMaskClosable |
+                              NSWindowStyleMaskResizable | NSWindowStyleMaskFullSizeContentView |
+                              NSWindowStyleMaskMiniaturizable];
+  mainContentView.window.titlebarAppearsTransparent = YES;
+  mainContentView.window.appearance = [NSAppearance appearanceNamed:NSAppearanceNameVibrantDark];
+  NSView *view = [[NSView alloc] initWithFrame:NSMakeRect(100, 100, 100, 100)];
+  [view setWantsLayer:YES];
+  view.layer.backgroundColor = [[NSColor yellowColor] CGColor];
+  [mainContentView.window.contentView addSubview:view];
+  [mainContentView.window makeKeyWindow];
+  return nullptr;
+}
+
 napi_value Initialize(napi_env env, napi_value exports) {
   printThreadId("Initialize");
   register_napi_function(env, exports, "init", Init);
   register_napi_function(env, exports, "openNativeWindow", OpenNativeWindow);
+  register_napi_function(env, exports, "makeNativeWindow", MakeNativeWindow);
   return exports;
 }
 

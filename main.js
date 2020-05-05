@@ -4,11 +4,13 @@ const path = require('path');
 console.log();
 const addon = require('./utils').requireAddon('addon');
 console.log(`main process.pid: ${process.pid}\n`)
+const { NativeWindow } = require('./nativeWindow');
 
 // Prints: 'world'
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
 let mainWindow
+let nativeWindow
 
 function createWindow() {
   // Create the browser window.
@@ -31,6 +33,9 @@ function createWindow() {
     // when you should delete the corresponding element.
     mainWindow = null
   })
+
+  nativeWindow = new BrowserWindow({width: 800, height: 600, title: "NativeWindow"})
+  addon.makeNativeWindow(nativeWindow.getNativeWindowHandle(), undefined);
 }
 
 // This method will be called when Electron has finished
