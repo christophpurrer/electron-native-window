@@ -1,0 +1,25 @@
+{
+  // Disable built-in TS validator per instructions from
+  // https://github.com/flowtype/flow-for-vscode
+  "javascript.validate.enable": false,
+  "files.insertFinalNewline": true,
+  "editor.formatOnSave": true,
+  "files.exclude": {
+    "**/.DS_Store": true,
+    "**/.git": true,
+    "**/.hg": true,
+    "**/.svn": true,
+    "**/*.d.ts.map": true,
+    "**/build": true,
+    "**/CVS": true,
+    "**/dist": true,
+    "packages/**/src/**/*.d.ts": true,
+    "scripts/**/*.d.ts": true
+  },
+  "editor.tabSize": 2,
+  "eslint.validate": ["javascript"],
+  "typescript.tsdk": "node_modules/typescript/lib",
+  "prettier.endOfLine": "lf",
+  "files.eol": "\n",
+  "eslint.enable": true
+}

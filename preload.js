@@ -9,4 +9,4 @@ if (process.platform === 'darwin') {
 }
 console.log(`render process.pid: ${process.pid}`)
 window.document.renderaddon = renderaddon;
-require('electron').remote.getCurrentWindow().toggleDevTools();
+// require('electron').remote.getCurrentWindow().toggleDevTools();

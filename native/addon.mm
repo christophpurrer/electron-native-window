@@ -44,6 +44,7 @@
     [window_
         setFrameTopLeftPoint:NSMakePoint(100, [[NSScreen mainScreen] frame].size.height - 100)];
     [window_ setDelegate:self];
+    [window_ setTitle:@"NSWindow"];
 
     // add a button
     NSButton* button = [[NSButton alloc] initWithFrame:NSMakeRect(10, 10, 100, 50)];
@@ -55,7 +56,7 @@
     // don't release window_ onClose, do it when NativeWindow gets released
     // https://developer.apple.com/documentation/appkit/nswindow/1419662-close?language=objc
     [window_ setReleasedWhenClosed:NO];
-      
+
     // show it
     [window_ makeKeyAndOrderFront:NULL];
   }
